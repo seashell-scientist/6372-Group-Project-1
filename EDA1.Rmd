@@ -7,17 +7,30 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(dataMaid)
 ```
 
 
 ```{r import}
 #insert your movie database file here
 
-mdata <- readxl::read_xlsx("D:/SMU/DS 6372 Applied Statistics/Sample Datasets/2014 and 2015 CSM dataset.xlsx")
+mdata <- readxl::read_xlsx("./2014 and 2015 CSM dataset.xlsx")
+
+#mdata <- readxl::read_xlsx("D:/SMU/DS 6372 Applied Statistics/Sample Datasets/2014 and 2015 CSM dataset.xlsx")
 
 head(mdata)
 
 ```
+```{r Datamaid checking variables, echo=T}
+
+#{bjh}does a lot of checks automatically and outputs a PDF report, 
+#I haven't had time to go through it in detail yet
+makeDataReport(mdata,replace = TRUE)
+
+summarize(mdata$Gross) 
+
+```
+
 
 ```{r inital visualizations}
 library(ggplot2)
