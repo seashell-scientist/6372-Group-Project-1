@@ -1,0 +1,57 @@
+---
+title: "6372 EDA moviedata"
+author: "Jonathan Tan"
+date: "9/17/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r import}
+#insert your movie database file here
+
+mdata <- readxl::read_xlsx("D:/SMU/DS 6372 Applied Statistics/Sample Datasets/2014 and 2015 CSM dataset.xlsx")
+
+head(mdata)
+
+```
+
+```{r inital visualizations}
+library(ggplot2)
+
+ggplot(data = mdata, aes(x = Ratings, y = Gross))+
+  geom_bin2d(bins = 20)+
+  labs(title = "Movie Ratings VS Gross")
+```
+
+```{r vis2}
+ggplot()+
+  geom_histogram(data = mdata, aes(x = Screens, fill = I("yellow")), binwidth = 40)
+
+ggplot(data = mdata, aes(x = Screens, y = Gross))+
+  geom_line()
+```
+
+
+```{r vis3}
+ggplot(data = mdata, aes(x = Budget, y = Gross, color = factor(Year)))+
+  geom_line(linejoin = "round")
+ 
+ggplot(data = mdata, aes(sample = Gross, color = Year))+
+  geom_qq()
+
+```
+
+
+roughly positive correlation between gross and rating, screens obviously positively correlates with gross. 
+
+the distribution isn't normal, lots of small presumably indie films that didn't make much gross or have many theater showings, and a few huge blockbusters
+
+
+
+
+
+
