@@ -7,7 +7,6 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(dataMaid)
 ```
 
 
@@ -23,12 +22,33 @@ head(mdata)
 ```
 ```{r Datamaid checking variables, echo=T}
 
+library(dplyr)
+library(dataMaid)
+library(tidyverse)
+`%!in%` = Negate(`%in%`)
+
 #{bjh}does a lot of checks automatically and outputs a PDF report, 
 #I haven't had time to go through it in detail yet
 makeDataReport(mdata,replace = TRUE)
 
-summarize(mdata$Gross) 
+#Let me try to remove some of the outliers DataMaid suggested and redo the plots
+#Takes it from 231 observations to 205, probably need to scale this back a little bit
+mdata_noOutliers<-mdata %>% 
+  filter(Movie!="Left Behind") %>% #Ratings 3.1 
+  filter(Movie !="Jurassic World") %>% # GROSS
+  filter(Screens <=4080) %>%  #SCREENS
+  #filter(Sentiment>0) %>% #SENTIMENT ALL NEGATIVES ARE OUTLIERS this is too aggressive it removes half the data
+  filter(Movie %!in% c("The Fault in Our Stars","Fifty Shades of Grey")) %>%  #VIEWS ABOVE 31859569
+  filter(Movie %!in% c("The Fault in Our Stars","Not Cool")) %>%  #LIKES ABOVE 187162
+  filter(Dislikes <= 3439) %>% #DISLIKES 
+  filter(Comments <= 18077) #COMMENTS
 
+makeDataReport(mdata_noOutliers,replace = TRUE)
+
+library("PerformanceAnalytics")
+
+a<- mdata_noOutliers %>% select_if(is.numeric)
+chart.Correlation(a , histogram=TRUE, pch=19)
 ```
 
 
