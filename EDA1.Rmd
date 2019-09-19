@@ -27,9 +27,15 @@ library(dataMaid)
 library(tidyverse)
 `%!in%` = Negate(`%in%`)
 
+mdata_encoded<-mdata %>% 
+  mutate(Year=as.factor(Year),
+         Genre=as.factor(Genre)
+  ) %>% 
+  mutate(isSequel=ifelse(Sequel>1,TRUE,FALSE))
+
 #{bjh}does a lot of checks automatically and outputs a PDF report, 
 #I haven't had time to go through it in detail yet
-makeDataReport(mdata,replace = TRUE)
+makeDataReport(mdata_encoded,replace = TRUE)
 
 #Let me try to remove some of the outliers DataMaid suggested and redo the plots
 #Takes it from 231 observations to 205, probably need to scale this back a little bit
@@ -44,11 +50,20 @@ mdata_noOutliers<-mdata %>%
   filter(Comments <= 18077) #COMMENTS
 
 makeDataReport(mdata_noOutliers,replace = TRUE)
+clean(mdata_noOutliers,replace = TRUE)
+visualize(mdata_noOutliers,replace = TRUE)
+check(mdata_noOutliers,replace = TRUE)
+makeCodebook(mdata_noOutliers,replace = TRUE)
+
 
 library("PerformanceAnalytics")
 
 a<- mdata_noOutliers %>% select_if(is.numeric)
 chart.Correlation(a , histogram=TRUE, pch=19)
+
+#Looks more normal but still long tails
+mdata_noOutliers %>% mutate_if(is.numeric, ~log(.)) %>% visualize(visuals =  setVisuals(all = "basicVisual"))
+
 ```
 
 
