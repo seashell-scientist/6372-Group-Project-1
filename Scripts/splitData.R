@@ -1,8 +1,11 @@
 #split dataframe into train & validation sets. Returns a list
 splitTrainValidation<-function(df){
+  set.seed(123)
+  
   
   getRandomSampleIndex<-function(df,percent=0.2){
-    sample.int(n = nrow(df), size = floor(percent*nrow(df)), replace = F)
+    smp_size <- floor(percent * nrow(df))
+    sample(seq_len(nrow(df)), size = smp_size)
   }
   
   randomSampleIndex<-getRandomSampleIndex(df)
