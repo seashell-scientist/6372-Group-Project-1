@@ -7,8 +7,8 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-```
 
+```
 
 ```{r import}
 #insert your movie database file here
@@ -35,7 +35,7 @@ mdata_encoded<-mdata %>%
 
 #{bjh}does a lot of checks automatically and outputs a PDF report, 
 #I haven't had time to go through it in detail yet
-makeDataReport(mdata_encoded,replace = TRUE)
+#makeDataReport(mdata_encoded,replace = TRUE)
 
 #Let me try to remove some of the outliers DataMaid suggested and redo the plots
 #Takes it from 231 observations to 205, probably need to scale this back a little bit
@@ -49,12 +49,13 @@ mdata_noOutliers<-mdata %>%
   filter(Dislikes <= 3439) %>% #DISLIKES 
   filter(Comments <= 18077) #COMMENTS
 
-makeDataReport(mdata_noOutliers,replace = TRUE)
-clean(mdata_noOutliers,replace = TRUE)
-visualize(mdata_noOutliers,replace = TRUE)
-check(mdata_noOutliers,replace = TRUE)
-makeCodebook(mdata_noOutliers,replace = TRUE)
+#PDF Output
+#makeCodebook(mdata_noOutliers,replace = TRUE)
+#makeDataReport(mdata_noOutliers,replace = TRUE)
 
+#clean(mdata_noOutliers,replace = TRUE)
+visualize(mdata_noOutliers,replace = TRUE)
+#check(mdata_noOutliers,replace = TRUE)
 
 library("PerformanceAnalytics")
 

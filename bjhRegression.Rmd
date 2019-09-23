@@ -1,0 +1,49 @@
+---
+title: "bjhRegression"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#pull in other Rmarkdown files to get data 
+ksource <- function(x, ...) {
+  library(knitr)
+  source(purl(x, output = tempfile(),quiet=TRUE), ...)
+}
+
+```
+
+## GET DATA FROM EDA Analysis 
+```{r get_data, include=FALSE, echo=FALSE, cache=FALSE}
+#RETURNS mdata, mdata_encoded, mdata_noOutliers 
+ksource("./EDA1.Rmd")
+
+```
+
+
+## Create train and validation test sets
+```{r, echo=TRUE}
+#RETURNS function splitTrainValidation(dataframe)
+source("./Scripts/splitData.R")
+
+trainValidation<-splitTrainValidation(mdata %>% 
+                                        select(-Movie) %>% #causes an error
+                                        na.omit() %>% #remove all NAs
+                                        rename(Aggregate_Followers=`Aggregate Followers`)) 
+
+trainValidationSet<-trainValidation$data
+trainSet<-trainValidation$trainingSet
+validationSet<-trainValidation$validationSet
+```
+
+## Get a Regression Model
+```{r, echo=TRUE}
+#RETURNS funciton ensembleRegression(train,validation,"fieldname")
+source("./Scripts/regression.R")
+
+regressionResults<-ensembleRegression(train=trainSet, validation=validationSet, fieldname="Gross")
+
+#On first go looks like RF wins
+View(regressionResults$WINNER_IMPORTANCE)
+
+```
