@@ -14,7 +14,8 @@ knitr::opts_chunk$set(echo = TRUE)
 #insert your movie database file here
 
 mdata <- readxl::read_xlsx("D:/SMU/DS 6372 Applied Statistics/Sample Datasets/2014 and 2015 CSM dataset.xlsx")
-
+names(mdata)[14]= "Aggregate_Followers" #the space was interfering with some loops
+#names(mdata)
 head(mdata)
 
 ```
@@ -70,31 +71,57 @@ plot(m2)
 ```{r var scatter}
 varpool <- names(mdata) #varnames
 varpool <- varpool[-5] #take out gross 
+varpool <- varpool[-1] #take out movie name
 z <- seq(1, length(varpool), 1) #number of var iterations 
 
 i = 0
 x = 0
-y <- vector()
-#would like to create iterative arrays in the for loop, but not sure how to use i to iterate names
 
 for( i in z)
 {
-  
  x <- t(combn(varpool, i)) #generate combinations of i variables
- comboname <- paste("combos", i)
+ comboname <- paste("combos", i, sep = "") #iterative name var generation thing?
  assign(comboname, x)
 }
+#should generate combinations of the 13 variables in groups of 1 to 12 
+
+
+
 ```
 
 
-```{r iterative var paste test}
-d <- 5
-for (i in 1:10)
+```{r run buncha models}
+#need to rotate combo lists, and through combo lists into lm formula
+#gross ~ combo[i]? 
+
+#works fine for the singular var, but how to stich the multiple model comboes into a readable formula
+
+
+q = 1
+comboslength <- seq(1, length(combos1), 1)
+for(i in comboslength)
 {
-  nam <- paste("combo", i)
-  assign(nam, )
+  mname <- paste("model", q, sep = "")
+  
+  varform <- as.formula(paste("Gross ~", combos1[i], sep = ""))
+  l = lm(formula = varform, data = mdata)
+  
+  assign(mname, l)
+  q = q+1
 }
+
 ```
+
+
+```{r test formula generation}
+varform <- as.formula(paste("Gross ~ ", combos2[1], sep = ""))
+lm(formula= varform, data = mdata)
+```
+
+
+
+
+
 
 
 
