@@ -20,6 +20,71 @@ mdata <- readxl::read_xlsx("./2014 and 2015 CSM dataset.xlsx")
 head(mdata)
 
 ```
+```{r correlation}
+#skim the data 
+library(skimr)
+skim(mdata)
+#From this correlation plot, we can see the correlation among variables with the original data.  I think the dependent variable should be gross or ratings.  Look at the variables that are correlated.  
+install.packages("corrplot")
+library(corrplot)
+correlations <- cor(mdata[, c(2,3, 5:14)])
+corrplot(correlations, method="circle")
+
+
+###Best First Model
+#Model 1-From this model as Gross as the dependent variable, we can see that Aggregate.Follwers, Ratings, Budget, and Screens are significant.
+mod1 <- lm(Gross ~ Genre + Year + Ratings + Budget + Screens+ Sequel+ Sentiment + Views + Likes + Dislikes + Comments + Aggregate.Followers, data=mdata)
+print(summary(mod1))
+
+#Baseline model of Model 1.
+mod1a <- lm(Gross ~ Ratings + Budget + Screens+ Aggregate.Followers, data=mdata)
+print(summary(mod1a))
+
+
+library(ggplot2)
+ggplot(mdata, aes(x = Ratings, y = Gross)) +  geom_point()  + geom_smooth(method="lm")
+
+#From this plot and this model, we see a positive correlation between gross and ratings.  
+From the plot we see that the distribution of gross is pretty skewed and I had an idea came up to find out what determines a movie that makes more than 50 million dollars.
+Then the dependent variable is a binary response variable, taking value 1 if it makes more than $50M
+And taking value 0 otherwise.
+So we can run a logistic model with that to predict which movies would make more than $50 million.
+
+
+
+
+
+
+############################Other possible first models
+#Model 2
+mod2 <- lm(Ratings ~ Genre + Year + Gross + Budget + Screens+ Sequel+ Sentiment + Views + Likes + Dislikes + Comments + Aggregate.Followers, data=mdata)
+print(summary(mod2))
+
+
+#Model 3
+mod3 <- lm(Likes ~ Genre + Year + Ratings + Budget + Screens+ Sequel+ Gross + Views + Sentiment + Dislikes + Comments + Aggregate.Followers, data=mdata)
+print(summary(mod3))
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
 ```{r Datamaid checking variables, echo=T}
 
 library(dplyr)
