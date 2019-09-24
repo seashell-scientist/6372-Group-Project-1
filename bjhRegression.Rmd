@@ -11,7 +11,6 @@ ksource <- function(x, ...) {
   source(purl(x, output = tempfile(),quiet=TRUE), ...)
 }
 library(car)
-
 ```
 
 ## GET DATA FROM EDA Analysis 
@@ -58,6 +57,8 @@ combined<-melt(regressionResults$Predictions) %>%
 plot(validationSet$Gross-regressionResults$WINNER_Predictions) 
 
 plot(regressionResults$WINNER_MODEL)
+
+regressionResults$RMSE_results
 
 plot(
      (validationSet$Gross/10000000),

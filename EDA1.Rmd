@@ -18,7 +18,6 @@ mdata <- readxl::read_xlsx("./2014 and 2015 CSM dataset.xlsx")
 #mdata <- readxl::read_xlsx("D:/SMU/DS 6372 Applied Statistics/Sample Datasets/2014 and 2015 CSM dataset.xlsx")
 
 head(mdata)
-
 ```
 ```{r correlation}
 #skim the data 
@@ -40,7 +39,6 @@ print(summary(mod1))
 mod1a <- lm(Gross ~ Ratings + Budget + Screens+ Aggregate.Followers, data=mdata)
 print(summary(mod1a))
 
-
 library(ggplot2)
 ggplot(mdata, aes(x = Ratings, y = Gross)) +  geom_point()  + geom_smooth(method="lm")
 
@@ -49,11 +47,6 @@ From the plot we see that the distribution of gross is pretty skewed and I had a
 Then the dependent variable is a binary response variable, taking value 1 if it makes more than $50M
 And taking value 0 otherwise.
 So we can run a logistic model with that to predict which movies would make more than $50 million.
-
-
-
-
-
 
 ############################Other possible first models
 #Model 2
@@ -66,23 +59,7 @@ mod3 <- lm(Likes ~ Genre + Year + Ratings + Budget + Screens+ Sequel+ Gross + Vi
 print(summary(mod3))
 
 
-
-
-
-
-
-
-
-
-
-
 ```
-
-
-
-
-
-
 
 
 ```{r Datamaid checking variables, echo=T}
@@ -131,7 +108,6 @@ chart.Correlation(a , histogram=TRUE, pch=19)
 mdata_noOutliers %>% mutate_if(is.numeric, ~log(.)) %>% visualize(visuals =  setVisuals(all = "basicVisual"))
 
 ```
-
 
 ```{r inital visualizations}
 library(ggplot2)
