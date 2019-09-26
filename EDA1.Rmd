@@ -7,17 +7,219 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-```
 
+```
 
 ```{r import}
 #insert your movie database file here
 
-mdata <- readxl::read_xlsx("D:/SMU/DS 6372 Applied Statistics/Sample Datasets/2014 and 2015 CSM dataset.xlsx")
+mdata <- readxl::read_xlsx("./2014 and 2015 CSM dataset.xlsx")
+
+#mdata <- readxl::read_xlsx("D:/SMU/DS 6372 Applied Statistics/Sample Datasets/2014 and 2015 CSM dataset.xlsx")
 
 head(mdata)
+```
+```{r correlation}
+#skim the data 
+library(skimr)
+skim(mdata)
+#From this correlation plot, we can see the correlation among variables with the original data.  I think the dependent variable should be gross or ratings.  Look at the variables that are correlated.  
+install.packages("corrplot")
+library(corrplot)
+correlations <- cor(mdata[, c(2,3, 5:14)])
+corrplot(correlations, method="circle")
+
+
+###Best First Model
+#Model 1-From this model as Gross as the dependent variable, we can see that Aggregate.Follwers, Ratings, Budget, and Screens are significant.
+mod1 <- lm(Gross ~ Genre + Year + Ratings + Budget + Screens+ Sequel+ Sentiment + Views + Likes + Dislikes + Comments + Aggregate.Followers, data=mdata)
+print(summary(mod1))
+
+#Baseline model of Model 1.
+mod1a <- lm(Gross ~ Ratings + Budget + Screens+ Aggregate.Followers, data=mdata)
+print(summary(mod1a))
+
+library(ggplot2)
+ggplot(mdata, aes(x = Ratings, y = Gross)) +  geom_point()  + geom_smooth(method="lm")
+
+#From this plot and this model, we see a positive correlation between gross and ratings.  
+From the plot we see that the distribution of gross is pretty skewed and I had an idea came up to find out what determines a movie that makes more than 50 million dollars.
+Then the dependent variable is a binary response variable, taking value 1 if it makes more than $50M
+And taking value 0 otherwise.
+So we can run a logistic model with that to predict which movies would make more than $50 million.
+
+############################Other possible first models
+#Model 2
+mod2 <- lm(Ratings ~ Genre + Year + Gross + Budget + Screens+ Sequel+ Sentiment + Views + Likes + Dislikes + Comments + Aggregate.Followers, data=mdata)
+print(summary(mod2))
+
+
+#Model 3
+mod3 <- lm(Likes ~ Genre + Year + Ratings + Budget + Screens+ Sequel+ Gross + Views + Sentiment + Dislikes + Comments + Aggregate.Followers, data=mdata)
+print(summary(mod3))
+
 
 ```
+
+
+```{r Datamaid checking variables, echo=T}
+
+library(dplyr)
+library(dataMaid)
+library(tidyverse)
+`%!in%` = Negate(`%in%`)
+
+mdata_encoded<-mdata %>% 
+  mutate(Year=as.factor(Year),
+         Genre=as.factor(Genre)
+  ) %>% 
+  mutate(isSequel=ifelse(Sequel>1,TRUE,FALSE))
+
+#{bjh}does a lot of checks automatically and outputs a PDF report, 
+#I haven't had time to go through it in detail yet
+#makeDataReport(mdata_encoded,replace = TRUE)
+
+#Let me try to remove some of the outliers DataMaid suggested and redo the plots
+#Takes it from 231 observations to 205, probably need to scale this back a little bit
+mdata_noOutliers<-mdata %>% 
+  filter(Movie!="Left Behind") %>% #Ratings 3.1 
+  filter(Movie !="Jurassic World") %>% # GROSS
+  filter(Screens <=4080) %>%  #SCREENS
+  #filter(Sentiment>0) %>% #SENTIMENT ALL NEGATIVES ARE OUTLIERS this is too aggressive it removes half the data
+  filter(Movie %!in% c("The Fault in Our Stars","Fifty Shades of Grey")) %>%  #VIEWS ABOVE 31859569
+  filter(Movie %!in% c("The Fault in Our Stars","Not Cool")) %>%  #LIKES ABOVE 187162
+  filter(Dislikes <= 3439) %>% #DISLIKES 
+  filter(Comments <= 18077) #COMMENTS
+
+#PDF Output
+#makeCodebook(mdata_noOutliers,replace = TRUE)
+#makeDataReport(mdata_noOutliers,replace = TRUE)
+
+#clean(mdata_noOutliers,replace = TRUE)
+visualize(mdata_noOutliers,replace = TRUE)
+#check(mdata_noOutliers,replace = TRUE)
+
+library("PerformanceAnalytics")
+
+a<- mdata_noOutliers %>% select_if(is.numeric)
+chart.Correlation(a , histogram=TRUE, pch=19)
+
+#Looks more normal but still long tails
+mdata_noOutliers %>% mutate_if(is.numeric, ~log(.)) %>% visualize(visuals =  setVisuals(all = "basicVisual"))
+
+```
+```{r correlation}
+#skim the data 
+library(skimr)
+skim(mdata)
+#From this correlation plot, we can see the correlation among variables with the original data.  I think the dependent variable should be gross or ratings.  Look at the variables that are correlated.  
+install.packages("corrplot")
+library(corrplot)
+correlations <- cor(mdata[, c(2,3, 5:14)])
+corrplot(correlations, method="circle")
+
+
+###Best First Model
+#Model 1-From this model as Gross as the dependent variable, we can see that Aggregate.Follwers, Ratings, Budget, and Screens are significant.
+mod1 <- lm(Gross ~ Genre + Year + Ratings + Budget + Screens+ Sequel+ Sentiment + Views + Likes + Dislikes + Comments + Aggregate.Followers, data=mdata)
+print(summary(mod1))
+
+#Baseline model of Model 1.
+mod1a <- lm(Gross ~ Ratings + Budget + Screens+ Aggregate.Followers, data=mdata)
+print(summary(mod1a))
+
+
+library(ggplot2)
+ggplot(mdata, aes(x = Ratings, y = Gross)) +  geom_point()  + geom_smooth(method="lm")
+
+#From this plot and this model, we see a positive correlation between gross and ratings.  
+From the plot we see that the distribution of gross is pretty skewed and I had an idea came up to find out what determines a movie that makes more than 50 million dollars.
+Then the dependent variable is a binary response variable, taking value 1 if it makes more than $50M
+And taking value 0 otherwise.
+So we can run a logistic model with that to predict which movies would make more than $50 million.
+
+
+
+
+
+
+############################Other possible first models
+#Model 2
+mod2 <- lm(Ratings ~ Genre + Year + Gross + Budget + Screens+ Sequel+ Sentiment + Views + Likes + Dislikes + Comments + Aggregate.Followers, data=mdata)
+print(summary(mod2))
+
+
+#Model 3
+mod3 <- lm(Likes ~ Genre + Year + Ratings + Budget + Screens+ Sequel+ Gross + Views + Sentiment + Dislikes + Comments + Aggregate.Followers, data=mdata)
+print(summary(mod3))
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+```{r Datamaid checking variables, echo=T}
+
+library(dplyr)
+library(dataMaid)
+library(tidyverse)
+`%!in%` = Negate(`%in%`)
+
+mdata_encoded<-mdata %>% 
+  mutate(Year=as.factor(Year),
+         Genre=as.factor(Genre)
+  ) %>% 
+  mutate(isSequel=ifelse(Sequel>1,TRUE,FALSE))
+
+#{bjh}does a lot of checks automatically and outputs a PDF report, 
+#I haven't had time to go through it in detail yet
+#makeDataReport(mdata_encoded,replace = TRUE)
+
+#Let me try to remove some of the outliers DataMaid suggested and redo the plots
+#Takes it from 231 observations to 205, probably need to scale this back a little bit
+mdata_noOutliers<-mdata %>% 
+  filter(Movie!="Left Behind") %>% #Ratings 3.1 
+  filter(Movie !="Jurassic World") %>% # GROSS
+  filter(Screens <=4080) %>%  #SCREENS
+  #filter(Sentiment>0) %>% #SENTIMENT ALL NEGATIVES ARE OUTLIERS this is too aggressive it removes half the data
+  filter(Movie %!in% c("The Fault in Our Stars","Fifty Shades of Grey")) %>%  #VIEWS ABOVE 31859569
+  filter(Movie %!in% c("The Fault in Our Stars","Not Cool")) %>%  #LIKES ABOVE 187162
+  filter(Dislikes <= 3439) %>% #DISLIKES 
+  filter(Comments <= 18077) #COMMENTS
+
+#PDF Output
+#makeCodebook(mdata_noOutliers,replace = TRUE)
+#makeDataReport(mdata_noOutliers,replace = TRUE)
+
+#clean(mdata_noOutliers,replace = TRUE)
+visualize(mdata_noOutliers,replace = TRUE)
+#check(mdata_noOutliers,replace = TRUE)
+
+library("PerformanceAnalytics")
+
+a<- mdata_noOutliers %>% select_if(is.numeric)
+chart.Correlation(a , histogram=TRUE, pch=19)
+
+#Looks more normal but still long tails
+mdata_noOutliers %>% mutate_if(is.numeric, ~log(.)) %>% visualize(visuals =  setVisuals(all = "basicVisual"))
+
+```
+
 
 ```{r inital visualizations}
 library(ggplot2)

@@ -118,6 +118,9 @@ summary(anov1)
 anov2 <- aov(Return ~ Genre + Budget + Year + Sequel + Screens + Ratings + Likes + Sequel*Year + Ratings*Likes +Genre*Year, data = mdata)
 summary(anov2)
 
+#shotgun3
+anov3 <- aov(Return ~ Genre + Budget + Year + Sequel + Screens + Ratings + Likes + Views + Dislikes + Aggregate_Followers + Sentiment*Views + Screens*Budget + Return*Ratings + Sequel*Year + Ratings*Likes +Genre*Year, data = mdata)
+summary(anov3)
 
 ```
 For Gross (unlogged)
@@ -127,6 +130,19 @@ looks like genre, budget, screens and ratings are all significant factors, seque
 for Return (Gross/Budget), 
 looks like genre, genre:year is significant, as is rating:likes
 surprisingly not budget? 
+
+```{r fit model based on anova variable selection thing?}
+alm1 <- lm(Return ~ Genre + Ratings*Likes + Genre*Year, data = mdata)
+summary(alm)
+```
+
+```{r compare models}
+#compare ASE scores, plus more
+#then format into table, model 1 v 2 with score metrics in columns
+```
+
+
+
 
 
 

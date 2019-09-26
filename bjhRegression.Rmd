@@ -1,0 +1,94 @@
+---
+title: "bjhRegression"
+output: html_document
+---
+
+```{r setup2, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#pull in other Rmarkdown files to get data 
+ksource <- function(x, ...) {
+  library(knitr)
+  source(purl(x, output = tempfile(),quiet=TRUE), ...)
+}
+library(car)
+<<<<<<< HEAD
+
+=======
+>>>>>>> 1cbfe9cf0615593909ab501dabe4cb854eb7bcd2
+```
+
+## GET DATA FROM EDA Analysis 
+```{r get_data, include=FALSE, echo=FALSE, cache=FALSE}
+#RETURNS mdata, mdata_encoded, mdata_noOutliers 
+ksource("./EDA1.Rmd")
+```
+
+## Create train and validation test sets
+```{r, echo=TRUE}
+#RETURNS function splitTrainValidation(dataframe)
+source("./Scripts/splitData.R")
+
+trainValidation<-splitTrainValidation(mdata_encoded %>% 
+                                        select(-Movie) %>% #causes an error
+                                        na.omit() %>% #remove all NAs
+                                        select(-Sequel) %>% #because we already included isSequal
+                                        rename(Aggregate_Followers=`Aggregate Followers`)#was erroring
+                                      ) 
+
+trainValidationSet<-trainValidation$data
+trainSet<-trainValidation$trainingSet
+validationSet<-trainValidation$validationSet
+```
+
+## Get a Regression Model
+```{r, echo=F}
+#RETURNS funciton ensembleRegression(train,validation,"fieldname")
+source("./Scripts/regression.R")
+library(reshape2)
+
+regressionResults<-ensembleRegression(train=trainSet, validation=validationSet, fieldname="Gross")
+
+#predictions for all models 
+combined<-melt(regressionResults$Predictions) %>% 
+  rename(Model=1, Gross=2) %>% 
+  filter(Model %!in% c("ensemble mean"))
+
+```
+
+#PLOT RESULTS
+```{r, echo=F}
+#residulas 
+plot(validationSet$Gross-regressionResults$WINNER_Predictions) 
+
+plot(regressionResults$WINNER_MODEL)
+
+<<<<<<< HEAD
+=======
+regressionResults$RMSE_results
+
+>>>>>>> 1cbfe9cf0615593909ab501dabe4cb854eb7bcd2
+plot(
+     (validationSet$Gross/10000000),
+     (validationSet$Gross-regressionResults$WINNER_Predictions)/10000000, 
+     ylab="Residuals($ millions)", 
+     xlab="Gross($ millions)",
+     main = paste("Importance of Variables for the winner", regressionResults$WINNER_NAME))
+abline(0, 0) 
+
+varImpPlot(regressionResults$WINNER_MODEL, pch = 20, main = paste("Importance of Variables for the winner", regressionResults$WINNER_NAME)
+           )
+
+ggplot(combined, aes(x=Gross/10000000, fill=Model)) + 
+  geom_histogram(alpha=0.2, position="identity", bins=5) + 
+  xlab(label="Gross in Millions($)")
+
+ggplot(combined, aes(y=Gross/10000000, x=Model, fill=Model)) + geom_point(aes(colour = Model))
+
+ggplot(combined, aes(y=Gross/10000000, x=Model, fill=Model)) + 
+  geom_dotplot(binaxis = 'y',stackdir='center',position=position_dodge(1),binwidth = 1) + 
+  xlab(label="Gross in Millions($)")
+<<<<<<< HEAD
+```
+=======
+```
+>>>>>>> 1cbfe9cf0615593909ab501dabe4cb854eb7bcd2
