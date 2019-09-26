@@ -1,0 +1,7 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+dataMaid_*
+codebook_*
+!dataMaid_mdata.pdf
