@@ -21,7 +21,9 @@ names(mdata)[14]= "Aggregate_Followers" #the space was interfering with some loo
 #adding Return as gross/budget, interpret as what % profit the movie made based off its budget
 Return <- mdata$Gross/mdata$Budget
 mdata <- cbind(mdata, Return)
-head(mdata)
+
+#trim movie names
+mdata <- mdata[,-1]
 ```
 
 ```{r inital visualizations}
@@ -85,6 +87,14 @@ high levels of return are genres 3, 8, and 15, with some 1 and 6
 #qqnorm(log(expense), main = "Log (Budget / Gross" )
 
 #qqnorm(log(mdata$Gross)/log(mdata$Budget), main = "log Gross / Log Budget")
+
+library(nortest)
+ad.test(mdata$Gross)
+ad.test(mdata$Return)
+ad.test(mdata$Budget)
+ad.test(mdata$Aggregate_Followers)
+ad.test(mdata$Ratings)
+ad.test(mdata$Genre)
 ```
 
 
@@ -108,20 +118,30 @@ high levels of return are genres 3, 8, and 15, with some 1 and 6
 
 ```{r anova thing}
 library(dplyr)
-str(mdata)
+#str(mdata)
 
 #shotgun1
-anov1 <- aov(Gross ~ Genre + Budget + Year + Sequel + Screens + Ratings + Likes + Sequel*Year + Ratings*Likes +Genre*Year, data = mdata)
-summary(anov1)
+#anov1 <- aov(Gross ~ Genre + Budget + Year + Sequel + Screens + Ratings + Likes + Sequel*Year + Ratings*Likes +Genre*Year, data = mdata)
+#summary(anov1)
 
 #shotgun2
-anov2 <- aov(Return ~ Genre + Budget + Year + Sequel + Screens + Ratings + Likes + Sequel*Year + Ratings*Likes +Genre*Year, data = mdata)
-summary(anov2)
+#anov2 <- aov(Return ~ Genre + Budget + Year + Sequel + Screens + Ratings + Likes + Sequel*Year + Ratings*Likes +Genre*Year, data = mdata)
+#summary(anov2)
 
 #shotgun3
-anov3 <- aov(Return ~ Genre + Budget + Year + Sequel + Screens + Ratings + Likes + Views + Dislikes + Aggregate_Followers + Sentiment*Views + Screens*Budget + Return*Ratings + Sequel*Year + Ratings*Likes +Genre*Year, data = mdata)
-summary(anov3)
+#anov3 <- aov(Gross ~ Genre + Budget + Year + Sequel + Screens + Ratings + Likes + Views + Dislikes + Aggregate_Followers + Sentiment*Views + Screens*Budget + Return*Ratings + Sequel*Year + Ratings*Likes +Genre*Year, data = mdata)
+#summary(anov3)
 
+#shotgun4
+anov4 <- aov(Return ~ Genre + Budget + Year + Sequel + Screens + Ratings + Likes + Views + Dislikes + Aggregate_Followers + Sentiment*Views + Screens*Budget + Return*Ratings + Sequel*Year + Ratings*Likes +Genre*Year, data = mdata)
+
+summary(anov3)
+```
+
+
+```{r ftest}
+Anova(anov2, type = 3)
+#getting pretty signficant differencew between various anova combinations
 ```
 For Gross (unlogged)
 looks like genre, budget, screens and ratings are all significant factors, sequel and year:sequel less so
@@ -131,14 +151,78 @@ for Return (Gross/Budget),
 looks like genre, genre:year is significant, as is rating:likes
 surprisingly not budget? 
 
-```{r fit model based on anova variable selection thing?}
-alm1 <- lm(Return ~ Genre + Ratings*Likes + Genre*Year, data = mdata)
-summary(alm)
+
+```{r train test split}
+library(caTools)
+set.seed(6548)
+sampleset = sample.split(mdata, SplitRatio = 0.8)
+mtrain <- subset(mdata, sampleset == TRUE)
+mtest = subset(mdata, sampleset == FALSE)
 ```
+
+```{r fit model based on anova variable selection thing?}
+alm1 <- lm(Return ~ Genre + Ratings*Likes + Genre*Year, data = mtrain)
+summary(alm1)
+par(mfrow = c(2, 2))
+plot(alm1)
+```
+
+```{r fit model2}
+alm2 <- lm(Return ~ Genre + Genre*Year, data = mtrain)
+
+summary(alm2)
+par(mfrow = c(2, 2))
+plot(alm2)
+
+par(mfrow=c(1,2))
+plot(alm2$fitted.values, alm2$residuals, ylab="Resdiduals", xlab="Fitted")
+qqnorm(alm2$residuals)
+
+library(gridExtra)
+myfits<-data.frame(fitted.values=alm2$fitted.values,residuals=alm2$residuals)
+
+#Residual vs Fitted
+plot1<-ggplot(myfits,aes(x=fitted.values,y=residuals))+ylab("Residuals")+
+  xlab("Predicted")+geom_point()
+
+#QQ plot of residuals  #Note the diagonal abline is only good for qqplots of normal data.
+plot2<-ggplot(myfits,aes(sample=residuals))+
+  stat_qq()+geom_abline(intercept=mean(myfits$residuals), slope = sd(myfits$residuals))
+
+#Histogram of residuals
+plot3<-ggplot(myfits, aes(x=residuals)) + 
+  geom_histogram(aes(y=..density..),binwidth=1,color="black", fill="gray")+
+  geom_density(alpha=.1, fill="red")
+
+grid.arrange(plot1, plot2,plot3, ncol=3)
+
+
+
+
+
+```
+
+```{r apply model?}
+pred1 <- predict(alm2, newdata = mtest)
+rmse <- sqrt(sum((exp(pred1) - mtest$Return)^2)/length(mtest$Return))
+c(RMSE = rmse, R2 = summary(alm2)$r.squared)
+
+par(mfrow = c(1, 1))
+ggplot()+
+  geom_line(data = mtest, aes(x = Budget, y = Return), color = "blue")+
+  geom_line(aes(x = mtest$Budget, y = pred1), color = "red")
+  
+
+#plot(mtest$Return, pred1)
+```
+
+
 
 ```{r compare models}
 #compare ASE scores, plus more
 #then format into table, model 1 v 2 with score metrics in columns
+
+
 ```
 
 
