@@ -15,6 +15,7 @@ library(car)
 
 ## GET DATA FROM EDA Analysis 
 ```{r get_data, include=FALSE, echo=FALSE, cache=FALSE}
+
 #RETURNS mdata, mdata_encoded, mdata_noOutliers 
 ksource("./EDA1.Rmd")
 ```

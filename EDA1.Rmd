@@ -41,7 +41,7 @@ print(summary(mod1a))
 
 library(ggplot2)
 ggplot(mdata, aes(x = Ratings, y = Gross)) +  geom_point()  + geom_smooth(method="lm")
-
+```
 #From this plot and this model, we see a positive correlation between gross and ratings.  
 From the plot we see that the distribution of gross is pretty skewed and I had an idea came up to find out what determines a movie that makes more than 50 million dollars.
 Then the dependent variable is a binary response variable, taking value 1 if it makes more than $50M
@@ -50,13 +50,17 @@ So we can run a logistic model with that to predict which movies would make more
 
 ############################Other possible first models
 #Model 2
+```{r, class.source="answer", echo=T}
 mod2 <- lm(Ratings ~ Genre + Year + Gross + Budget + Screens+ Sequel+ Sentiment + Views + Likes + Dislikes + Comments + Aggregate.Followers, data=mdata)
 print(summary(mod2))
-
+```
 
 #Model 3
+```{r, class.source="answer", echo=T}
 mod3 <- lm(Likes ~ Genre + Year + Ratings + Budget + Screens+ Sequel+ Gross + Views + Sentiment + Dislikes + Comments + Aggregate.Followers, data=mdata)
 print(summary(mod3))
+```
+
 
 
 ```
