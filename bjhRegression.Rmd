@@ -11,6 +11,10 @@ ksource <- function(x, ...) {
   source(purl(x, output = tempfile(),quiet=TRUE), ...)
 }
 library(car)
+<<<<<<< HEAD
+
+=======
+>>>>>>> 1cbfe9cf0615593909ab501dabe4cb854eb7bcd2
 ```
 
 ## GET DATA FROM EDA Analysis 
@@ -59,8 +63,11 @@ plot(validationSet$Gross-regressionResults$WINNER_Predictions)
 
 plot(regressionResults$WINNER_MODEL)
 
+<<<<<<< HEAD
+=======
 regressionResults$RMSE_results
 
+>>>>>>> 1cbfe9cf0615593909ab501dabe4cb854eb7bcd2
 plot(
      (validationSet$Gross/10000000),
      (validationSet$Gross-regressionResults$WINNER_Predictions)/10000000, 
@@ -81,4 +88,8 @@ ggplot(combined, aes(y=Gross/10000000, x=Model, fill=Model)) + geom_point(aes(co
 ggplot(combined, aes(y=Gross/10000000, x=Model, fill=Model)) + 
   geom_dotplot(binaxis = 'y',stackdir='center',position=position_dodge(1),binwidth = 1) + 
   xlab(label="Gross in Millions($)")
+<<<<<<< HEAD
 ```
+=======
+```
+>>>>>>> 1cbfe9cf0615593909ab501dabe4cb854eb7bcd2

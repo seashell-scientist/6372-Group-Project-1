@@ -1,0 +1,235 @@
+---
+title: "6372 EDA moviedata"
+author: "Jonathan Tan"
+date: "9/17/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r import}
+#insert your movie database file here
+
+mdata <- readxl::read_xlsx("D:/SMU/DS 6372 Applied Statistics/Sample Datasets/2014 and 2015 CSM dataset.xlsx")
+names(mdata)[14]= "Aggregate_Followers" #the space was interfering with some loops
+#names(mdata)
+
+
+#adding Return as gross/budget, interpret as what % profit the movie made based off its budget
+Return <- mdata$Gross/mdata$Budget
+mdata <- cbind(mdata, Return)
+
+#trim movie names
+mdata <- mdata[,-1]
+```
+
+```{r inital visualizations}
+library(ggplot2)
+
+ggplot(data = mdata, aes(x = Ratings, y = Gross))+
+  geom_bin2d(bins = 20)+
+  labs(title = "Movie Ratings VS Gross")
+```
+
+```{r vis2}
+ggplot()+
+  geom_histogram(data = mdata, aes(x = Screens, fill = I("Blue")), binwidth = 40)
+
+ggplot(data = mdata, aes(x = Screens, y = Gross))+
+  geom_line()
+```
+
+
+```{r vis3}
+ggplot(data = mdata, aes(x = Budget, y = Gross, color = factor(Year)))+
+  geom_line(linejoin = "round")
+ 
+ggplot(data = mdata, aes(sample = Gross, color = Year))+
+  geom_qq()
+```
+
+```{r vis4}
+#install.packages("ggpubr")
+library(ggpubr)
+ggboxplot(mdata, x = "Budget", y = "Gross", color = "Genre")
+```
+
+```{r vis5}
+ggline(mdata, x = "Genre", y = "Return", 
+       add = c("mean_se", "dotplot"))
+```
+
+roughly positive correlation between gross and rating, screens obviously positively correlates with gross. 
+
+the distribution isn't normal, lots of small presumably indie films that didn't make much gross or have many theater showings, and a few huge blockbusters
+
+high levels of return are genres 3, 8, and 15, with some 1 and 6
+
+```{r check assumptions}
+#par(mfrow=(c(2, 2)))
+#qqnorm(mdata$Gross, main = "Gross")
+#qqnorm(mdata$Budget, main = "Budget")
+#
+#profit <- mdata$Gross / mdata$Budget
+#expense <- mdata$Budget/mdata$Gross
+#
+#qqnorm(profit, main = " Gross / Budget")
+#qqnorm(expense, main = "Budget / Gross")
+#
+#
+#
+#qqnorm(log(mdata$Gross), main =  "Log(Gross)")
+#qqnorm(log(mdata$Budget), main = "Log(Budget)")
+#qqnorm(log(profit), main = " Log(Gross / Budget)" )
+#qqnorm(log(expense), main = "Log (Budget / Gross" )
+
+#qqnorm(log(mdata$Gross)/log(mdata$Budget), main = "log Gross / Log Budget")
+
+library(nortest)
+ad.test(mdata$Gross)
+ad.test(mdata$Return)
+ad.test(mdata$Budget)
+ad.test(mdata$Aggregate_Followers)
+ad.test(mdata$Ratings)
+ad.test(mdata$Genre)
+```
+
+
+
+
+```{r prelim model1}
+#m1 <- lm(Gross ~ Budget + Screens, data = mdata)
+
+#summary(m1)
+#layout(matrix(c(1, 2, 3, 4), 2, 2)) 
+#plot(m1)
+```
+
+```{r prelim model2}
+#m2 <- lm(Gross ~ Budget + Screens + Budget*Screens, data = mdata)
+##with multvar
+#summary(m2)
+#layout(matrix(c(1, 2, 3, 4), 2, 2)) 
+#plot(m2)
+```
+
+```{r anova thing}
+library(dplyr)
+#str(mdata)
+
+#shotgun1
+#anov1 <- aov(Gross ~ Genre + Budget + Year + Sequel + Screens + Ratings + Likes + Sequel*Year + Ratings*Likes +Genre*Year, data = mdata)
+#summary(anov1)
+
+#shotgun2
+#anov2 <- aov(Return ~ Genre + Budget + Year + Sequel + Screens + Ratings + Likes + Sequel*Year + Ratings*Likes +Genre*Year, data = mdata)
+#summary(anov2)
+
+#shotgun3
+#anov3 <- aov(Gross ~ Genre + Budget + Year + Sequel + Screens + Ratings + Likes + Views + Dislikes + Aggregate_Followers + Sentiment*Views + Screens*Budget + Return*Ratings + Sequel*Year + Ratings*Likes +Genre*Year, data = mdata)
+#summary(anov3)
+
+#shotgun4
+anov4 <- aov(Return ~ Genre + Budget + Year + Sequel + Screens + Ratings + Likes + Views + Dislikes + Aggregate_Followers + Sentiment*Views + Screens*Budget + Return*Ratings + Sequel*Year + Ratings*Likes +Genre*Year, data = mdata)
+
+summary(anov3)
+```
+
+
+```{r ftest}
+Anova(anov2, type = 3)
+#getting pretty signficant differencew between various anova combinations
+```
+For Gross (unlogged)
+looks like genre, budget, screens and ratings are all significant factors, sequel and year:sequel less so
+
+
+for Return (Gross/Budget), 
+looks like genre, genre:year is significant, as is rating:likes
+surprisingly not budget? 
+
+
+```{r train test split}
+library(caTools)
+set.seed(6548)
+sampleset = sample.split(mdata, SplitRatio = 0.8)
+mtrain <- subset(mdata, sampleset == TRUE)
+mtest = subset(mdata, sampleset == FALSE)
+```
+
+```{r fit model based on anova variable selection thing?}
+alm1 <- lm(Return ~ Genre + Ratings*Likes + Genre*Year, data = mtrain)
+summary(alm1)
+par(mfrow = c(2, 2))
+plot(alm1)
+```
+
+```{r fit model2}
+alm2 <- lm(Return ~ Genre + Genre*Year, data = mtrain)
+
+summary(alm2)
+par(mfrow = c(2, 2))
+plot(alm2)
+
+par(mfrow=c(1,2))
+plot(alm2$fitted.values, alm2$residuals, ylab="Resdiduals", xlab="Fitted")
+qqnorm(alm2$residuals)
+
+library(gridExtra)
+myfits<-data.frame(fitted.values=alm2$fitted.values,residuals=alm2$residuals)
+
+#Residual vs Fitted
+plot1<-ggplot(myfits,aes(x=fitted.values,y=residuals))+ylab("Residuals")+
+  xlab("Predicted")+geom_point()
+
+#QQ plot of residuals  #Note the diagonal abline is only good for qqplots of normal data.
+plot2<-ggplot(myfits,aes(sample=residuals))+
+  stat_qq()+geom_abline(intercept=mean(myfits$residuals), slope = sd(myfits$residuals))
+
+#Histogram of residuals
+plot3<-ggplot(myfits, aes(x=residuals)) + 
+  geom_histogram(aes(y=..density..),binwidth=1,color="black", fill="gray")+
+  geom_density(alpha=.1, fill="red")
+
+grid.arrange(plot1, plot2,plot3, ncol=3)
+
+
+
+
+
+```
+
+```{r apply model?}
+pred1 <- predict(alm2, newdata = mtest)
+rmse <- sqrt(sum((exp(pred1) - mtest$Return)^2)/length(mtest$Return))
+c(RMSE = rmse, R2 = summary(alm2)$r.squared)
+
+par(mfrow = c(1, 1))
+ggplot()+
+  geom_line(data = mtest, aes(x = Budget, y = Return), color = "blue")+
+  geom_line(aes(x = mtest$Budget, y = pred1), color = "red")
+  
+
+#plot(mtest$Return, pred1)
+```
+
+
+
+```{r compare models}
+#compare ASE scores, plus more
+#then format into table, model 1 v 2 with score metrics in columns
+
+
+```
+
+
+
+
+
+
+
+
+
