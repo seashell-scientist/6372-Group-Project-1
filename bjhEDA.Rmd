@@ -1,0 +1,124 @@
+---
+title: "bjhEDA"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(skimr)
+library(dplyr)
+```
+
+```{r import}
+mdata <- readxl::read_xlsx("./2014 and 2015 CSM dataset.xlsx")
+
+head(mdata)
+#glimpse(mdata)
+```
+
+```{r transform response, echo=T}
+
+mdata_transform <- mdata%>% mutate(Gross_log=log(Gross))
+
+```
+
+```{r set factors, echo=T}
+
+library(dplyr)
+library(dataMaid)
+library(tidyverse)
+`%!in%` = Negate(`%in%`)
+
+mdata_encoded<-mdata_transform %>% 
+  mutate(Year=as.factor(Year),
+         Genre=as.factor(Genre)
+  ) %>% 
+  mutate(isSequel=as.factor(ifelse(Sequel>1,TRUE,FALSE)))
+
+``` 
+
+```{r Datamaid checking variables initial, echo=T}
+#PDF Output
+#makeCodebook(mdata_encoded,replace = TRUE)
+#makeDataReport(mdata_encoded,replace = TRUE)
+
+#clean(mdata_encoded,replace = TRUE)
+visualize(mdata_encoded,replace = TRUE)
+check(mdata_encoded,replace = TRUE)
+```
+
+
+```{r remove outliers and check datamaid again, echo=T}
+#{bjh}does a lot of checks automatically and outputs a PDF report, 
+#I haven't had time to go through it in detail yet
+#makeDataReport(mdata_encoded,replace = TRUE)
+
+#Let me try to remove some of the outliers DataMaid suggested and redo the plots
+#Takes it from 231 observations to 205, probably need to scale this back a little bit
+mdata_noOutliers<-mdata %>% 
+  filter(Movie!="Left Behind") %>% #Ratings 3.1 
+  filter(Movie !="Jurassic World") %>% # GROSS
+  filter(Screens <=4080) %>%  #SCREENS
+  #filter(Sentiment>0) %>% #SENTIMENT ALL NEGATIVES ARE OUTLIERS this is too aggressive it removes half the data
+  filter(Movie %!in% c("The Fault in Our Stars","Fifty Shades of Grey")) %>%  #VIEWS ABOVE 31859569
+  filter(Movie %!in% c("The Fault in Our Stars","Not Cool")) %>%  #LIKES ABOVE 187162
+  filter(Dislikes <= 3439) %>% #DISLIKES 
+  filter(Comments <= 18077) #COMMENTS
+
+#PDF Output
+#makeCodebook(mdata_noOutliers,replace = TRUE)
+#makeDataReport(mdata_noOutliers,replace = TRUE)
+
+#clean(mdata_noOutliers,replace = TRUE)
+visualize(mdata_noOutliers,replace = TRUE)
+check(mdata_noOutliers,replace = TRUE)
+```
+
+```{r, class.source="answer", echo=T}
+library("PerformanceAnalytics")
+
+a<- mdata_noOutliers %>% select_if(is.numeric)
+chart.Correlation(a , histogram=TRUE, pch=19)
+
+#Looks more normal but still long tails
+mdata_noOutliers %>% mutate_if(is.numeric, ~.) %>% visualize(visuals =  setVisuals(all = "basicVisual"))
+```
+
+#EDAreg
+```{r, class.source="answer", echo=T}
+source("./Scripts/edaFunctions.R")
+hist(mdata_encoded$Gross)
+hist(mdata_encoded$Gross_log)
+str(mdata_encoded)
+
+#HISTOGRAMS OF NUMERIC
+histAllNumeric(mdata_encoded)
+smoothHistAllNumeric(mdata_encoded)
+heatmapper(mdata_encoded)
+correlator(mdata_encoded)
+
+boxplotCats(mdata_encoded,"Gross_log")
+boxplotCats(mdata_encoded,"Gross")
+
+violinPlotCats(mdata_encoded,"Gross_log")
+violinPlotCats(mdata_encoded,"Gross")
+
+model1 <- lm(data = mdata_encoded, Gross_log ~.) 
+summary(model1)
+
+# exploring with base R and lapply
+# modify for your own data, this is geared for mtcars
+# for example train$income ~ train[[x]] instead of mtcars
+plot_vs_response <- function(df, responseVar, independentVar){
+  plot(df[[responseVar]] ~ df[[independentVar]], xlab = independentVar, ylab=responseVar)
+  lw1 <- loess(df[[responseVar]] ~ df[[independentVar]])
+  j <- order(df[[independentVar]])
+  lines(df[[independentVar]][j],lw1$fitted[j],col="red",lwd=3)
+}
+
+for(var in mdata_encoded %>%select_if(is.numeric) %>% names){
+  plot_vs_response(mdata_encoded, "Gross",var)
+}
+
+
+```

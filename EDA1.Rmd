@@ -61,57 +61,6 @@ mod3 <- lm(Likes ~ Genre + Year + Ratings + Budget + Screens+ Sequel+ Gross + Vi
 print(summary(mod3))
 ```
 
-
-
-```
-
-
-```{r Datamaid checking variables, echo=T}
-
-library(dplyr)
-library(dataMaid)
-library(tidyverse)
-`%!in%` = Negate(`%in%`)
-
-mdata_encoded<-mdata %>% 
-  mutate(Year=as.factor(Year),
-         Genre=as.factor(Genre)
-  ) %>% 
-  mutate(isSequel=ifelse(Sequel>1,TRUE,FALSE))
-
-#{bjh}does a lot of checks automatically and outputs a PDF report, 
-#I haven't had time to go through it in detail yet
-#makeDataReport(mdata_encoded,replace = TRUE)
-
-#Let me try to remove some of the outliers DataMaid suggested and redo the plots
-#Takes it from 231 observations to 205, probably need to scale this back a little bit
-mdata_noOutliers<-mdata %>% 
-  filter(Movie!="Left Behind") %>% #Ratings 3.1 
-  filter(Movie !="Jurassic World") %>% # GROSS
-  filter(Screens <=4080) %>%  #SCREENS
-  #filter(Sentiment>0) %>% #SENTIMENT ALL NEGATIVES ARE OUTLIERS this is too aggressive it removes half the data
-  filter(Movie %!in% c("The Fault in Our Stars","Fifty Shades of Grey")) %>%  #VIEWS ABOVE 31859569
-  filter(Movie %!in% c("The Fault in Our Stars","Not Cool")) %>%  #LIKES ABOVE 187162
-  filter(Dislikes <= 3439) %>% #DISLIKES 
-  filter(Comments <= 18077) #COMMENTS
-
-#PDF Output
-#makeCodebook(mdata_noOutliers,replace = TRUE)
-#makeDataReport(mdata_noOutliers,replace = TRUE)
-
-#clean(mdata_noOutliers,replace = TRUE)
-visualize(mdata_noOutliers,replace = TRUE)
-#check(mdata_noOutliers,replace = TRUE)
-
-library("PerformanceAnalytics")
-
-a<- mdata_noOutliers %>% select_if(is.numeric)
-chart.Correlation(a , histogram=TRUE, pch=19)
-
-#Looks more normal but still long tails
-mdata_noOutliers %>% mutate_if(is.numeric, ~log(.)) %>% visualize(visuals =  setVisuals(all = "basicVisual"))
-
-```
 ```{r correlation}
 #skim the data 
 library(skimr)
@@ -142,11 +91,6 @@ Then the dependent variable is a binary response variable, taking value 1 if it 
 And taking value 0 otherwise.
 So we can run a logistic model with that to predict which movies would make more than $50 million.
 
-
-
-
-
-
 ############################Other possible first models
 #Model 2
 mod2 <- lm(Ratings ~ Genre + Year + Gross + Budget + Screens+ Sequel+ Sentiment + Views + Likes + Dislikes + Comments + Aggregate.Followers, data=mdata)
@@ -157,73 +101,7 @@ print(summary(mod2))
 mod3 <- lm(Likes ~ Genre + Year + Ratings + Budget + Screens+ Sequel+ Gross + Views + Sentiment + Dislikes + Comments + Aggregate.Followers, data=mdata)
 print(summary(mod3))
 
-
-
-
-
-
-
-
-
-
-
-
 ```
-
-
-
-
-
-
-
-
-```{r Datamaid checking variables, echo=T}
-
-library(dplyr)
-library(dataMaid)
-library(tidyverse)
-`%!in%` = Negate(`%in%`)
-
-mdata_encoded<-mdata %>% 
-  mutate(Year=as.factor(Year),
-         Genre=as.factor(Genre)
-  ) %>% 
-  mutate(isSequel=ifelse(Sequel>1,TRUE,FALSE))
-
-#{bjh}does a lot of checks automatically and outputs a PDF report, 
-#I haven't had time to go through it in detail yet
-#makeDataReport(mdata_encoded,replace = TRUE)
-
-#Let me try to remove some of the outliers DataMaid suggested and redo the plots
-#Takes it from 231 observations to 205, probably need to scale this back a little bit
-mdata_noOutliers<-mdata %>% 
-  filter(Movie!="Left Behind") %>% #Ratings 3.1 
-  filter(Movie !="Jurassic World") %>% # GROSS
-  filter(Screens <=4080) %>%  #SCREENS
-  #filter(Sentiment>0) %>% #SENTIMENT ALL NEGATIVES ARE OUTLIERS this is too aggressive it removes half the data
-  filter(Movie %!in% c("The Fault in Our Stars","Fifty Shades of Grey")) %>%  #VIEWS ABOVE 31859569
-  filter(Movie %!in% c("The Fault in Our Stars","Not Cool")) %>%  #LIKES ABOVE 187162
-  filter(Dislikes <= 3439) %>% #DISLIKES 
-  filter(Comments <= 18077) #COMMENTS
-
-#PDF Output
-#makeCodebook(mdata_noOutliers,replace = TRUE)
-#makeDataReport(mdata_noOutliers,replace = TRUE)
-
-#clean(mdata_noOutliers,replace = TRUE)
-visualize(mdata_noOutliers,replace = TRUE)
-#check(mdata_noOutliers,replace = TRUE)
-
-library("PerformanceAnalytics")
-
-a<- mdata_noOutliers %>% select_if(is.numeric)
-chart.Correlation(a , histogram=TRUE, pch=19)
-
-#Looks more normal but still long tails
-mdata_noOutliers %>% mutate_if(is.numeric, ~log(.)) %>% visualize(visuals =  setVisuals(all = "basicVisual"))
-
-```
-
 
 ```{r inital visualizations}
 library(ggplot2)
@@ -285,13 +163,11 @@ y <- vector()
 
 for( i in z)
 {
-  
  x <- t(combn(varpool, i)) #generate combinations of i variables
  comboname <- paste("combos", i)
  assign(comboname, x)
 }
 ```
-
 
 ```{r iterative var paste test}
 d <- 5
@@ -301,18 +177,3 @@ for (i in 1:10)
   assign(nam, )
 }
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
