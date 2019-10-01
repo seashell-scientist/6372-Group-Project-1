@@ -83,3 +83,10 @@ plot_vs_response <- function(df, responseVar, independentVar){
   lines(df[[independentVar]][j],lw1$fitted[j],col="red",lwd=3)
 }
 
+
+
+
+
+
+
+
