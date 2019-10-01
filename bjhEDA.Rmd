@@ -171,10 +171,13 @@ predM<-mdata_encoded %>%
   finalfit::missing_predictorMatrix(drop_from_imputed =
     c("obstruct.factor", explanatory))
 
+
+
+#IMPUTE using PMM or CART
 mdata_imputated<-mdata_encoded %>% 
   select(dependent, explanatory) %>%
   # Usually run imputation with 10 imputed sets, 4 here for demonstration
-  mice(m = 4, predictorMatrix = predM, method='cart') %>%
+  mice(m = 4, predictorMatrix = predM, method='pmm') %>%
   # Run logistic regression on each imputed set
   mice::complete() %>%
   #add columns back in
@@ -187,5 +190,7 @@ mdata_imputated<-mdata_encoded %>%
 mdata_imputated %>% missing_plot()
 
 mdata_imputated %>% filter(is.na(Gross_log))
+
+mdata_imputated %>% write_csv("./mdata_imputated.csv")
 
 ```
