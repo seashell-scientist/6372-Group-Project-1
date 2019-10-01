@@ -101,19 +101,19 @@ ad.test(mdata$Genre)
 
 
 ```{r prelim model1}
-#m1 <- lm(Gross ~ Budget + Screens, data = mdata)
+m1 <- lm(Gross ~ Budget + Screens, data = mdata)
 
-#summary(m1)
-#layout(matrix(c(1, 2, 3, 4), 2, 2)) 
-#plot(m1)
+summary(m1)
+layout(matrix(c(1, 2, 3, 4), 2, 2)) 
+plot(m1)
 ```
 
 ```{r prelim model2}
-#m2 <- lm(Gross ~ Budget + Screens + Budget*Screens, data = mdata)
+m2 <- lm(Gross ~ Budget + Screens + Budget*Screens, data = mdata)
 ##with multvar
-#summary(m2)
-#layout(matrix(c(1, 2, 3, 4), 2, 2)) 
-#plot(m2)
+summary(m2)
+layout(matrix(c(1, 2, 3, 4), 2, 2)) 
+plot(m2)
 ```
 
 ```{r anova thing}
@@ -121,27 +121,48 @@ library(dplyr)
 #str(mdata)
 
 #shotgun1
-#anov1 <- aov(Gross ~ Genre + Budget + Year + Sequel + Screens + Ratings + Likes + Sequel*Year + Ratings*Likes +Genre*Year, data = mdata)
+anov1 <- aov(Gross ~ Genre + Budget + Year + Sequel + Screens + Ratings + Likes + Sequel*Year + Ratings*Likes +Genre*Year, data = mdata)
 #summary(anov1)
 
 #shotgun2
-#anov2 <- aov(Return ~ Genre + Budget + Year + Sequel + Screens + Ratings + Likes + Sequel*Year + Ratings*Likes +Genre*Year, data = mdata)
+anov2 <- aov(Return ~ Genre + Budget + Year + Sequel + Screens + Ratings + Likes + Sequel*Year + Ratings*Likes +Genre*Year, data = mdata)
 #summary(anov2)
 
 #shotgun3
-#anov3 <- aov(Gross ~ Genre + Budget + Year + Sequel + Screens + Ratings + Likes + Views + Dislikes + Aggregate_Followers + Sentiment*Views + Screens*Budget + Return*Ratings + Sequel*Year + Ratings*Likes +Genre*Year, data = mdata)
+anov3 <- aov(Gross ~ Genre + Budget + Year + Sequel + Screens + Ratings + Likes + Views + Dislikes + Aggregate_Followers + Sentiment*Views + Screens*Budget + Return*Ratings + Sequel*Year + Ratings*Likes +Genre*Year, data = mdata)
 #summary(anov3)
 
 #shotgun4
 anov4 <- aov(Return ~ Genre + Budget + Year + Sequel + Screens + Ratings + Likes + Views + Dislikes + Aggregate_Followers + Sentiment*Views + Screens*Budget + Return*Ratings + Sequel*Year + Ratings*Likes +Genre*Year, data = mdata)
 
-summary(anov3)
+#summary(anov4)
+```
+
+```{r normality test}
+par(mfrow = c(2, 2))
+plot(anov1, 2)
+plot(anov2, 2)
+plot(anov3, 2)
+plot(anov4, 2)
 ```
 
 
 ```{r ftest}
-Anova(anov2, type = 3)
-#getting pretty signficant differencew between various anova combinations
+#anova(anov4, type = 3)
+#getting pretty signficant differences between various anova combinations
+
+```
+
+
+```{r sum stats}
+group_by(mdata, Genre, Sequel) %>% 
+  summarise(
+    count = n(), 
+    mean = mean(Return, na.rm = TRUE) ,
+    sd = sd(Return, na.rm = TRUE)
+  )
+#model.tables(anov4, type = "means", se = TRUE) #too long
+
 ```
 For Gross (unlogged)
 looks like genre, budget, screens and ratings are all significant factors, sequel and year:sequel less so
