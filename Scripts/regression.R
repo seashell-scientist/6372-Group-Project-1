@@ -119,3 +119,10 @@ ensembleRegression <- function(train,validation,fieldname){
        "LOSER_Predictions"=get(LOSER_NAME, Predictions)
   )
 }
+
+#CREATE A FUNCTION FOR THIS
+#formula(ff_formula(dependent, explanatory))#creates a formula for us
+#"Gross ~ Year + Ratings + Genre + Budget + Screens + Sequel + 
+#    Sentiment + Views + Likes + Dislikes + Comments + Aggregate.Followers + 
+#    isSequel"
+

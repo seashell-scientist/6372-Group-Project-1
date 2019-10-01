@@ -1,0 +1,196 @@
+---
+title: "bjhEDA"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(skimr)
+library(dplyr)
+library(dataMaid)
+```
+
+```{r import}
+mdata <- readxl::read_xlsx("./2014 and 2015 CSM dataset.xlsx") %>% rename('Aggregate.Followers'='Aggregate Followers')
+
+head(mdata)
+#glimpse(mdata)
+
+mdata %>% View()
+```
+
+```{r transform response, echo=F}
+
+mdata_transform <- mdata%>% 
+  mutate(Gross=Gross/1000000) %>% #convert to unit of $ millions for readability   
+  mutate(Budget=Budget/1000000) %>% #convert to unit of $ millions for readability   
+  mutate(Gross_log=log(Gross)) 
+```
+
+```{r set factors, echo=F}
+
+library(dplyr)
+library(dataMaid)
+library(tidyverse)
+`%!in%` = Negate(`%in%`)
+
+mdata_encoded<-mdata_transform %>%
+  mutate(Year=as.factor(Year),
+         Genre=as.factor(Genre)
+  ) #%>%
+  #mutate(isSequel=as.factor(ifelse(Sequel>1,TRUE,FALSE))) #FEATURE CREATION?
+
+```
+
+```{r Datamaid checking variables initial, echo=F}
+#PDF Output
+#makeCodebook(mdata_encoded,replace = TRUE)
+#makeDataReport(mdata_encoded,replace = TRUE)
+
+#clean(mdata_encoded,replace = TRUE)
+visualize(mdata_encoded,replace = TRUE)
+dataMaid::check(mdata_encoded,replace = TRUE)
+```
+
+
+```{r remove outliers and check datamaid again, echo=F}
+#{bjh}does a lot of checks automatically and outputs a PDF report,
+#I haven't had time to go through it in detail yet
+#makeDataReport(mdata_encoded,replace = TRUE)
+
+check(mdata_encoded, checks = setChecks(numeric = "identifyOutliers"), maxDecimals = 4)
+#https://rdrr.io/cran/dataMaid/man/identifyOutliers.html
+#Q1 - 1.5*exp(a*MC)*IQR ; Q3 + 1.5*exp(b*MC)*IQR
+
+#Let me try to remove some of the outliers DataMaid suggested and redo the plots
+#Takes it from 231 observations to 205, probably need to scale this back a little bit
+mdata_noOutliers<-mdata_encoded %>%
+  filter(Movie!="Left Behind") %>% #Ratings 3.1
+  filter(Movie !="Jurassic World") %>% # GROSS
+  filter(Screens <=4080) %>%  #SCREENS
+  #filter(Sentiment>0) %>% #SENTIMENT ALL NEGATIVES ARE OUTLIERS this is too aggressive it removes half the data
+  #filter(Movie %!in% c("The Fault in Our Stars","Fifty Shades of Grey")) %>%  #VIEWS ABOVE 31859569
+  filter(Movie %!in% c("The Fault in Our Stars","Not Cool")) %>%  #LIKES ABOVE 187162
+  filter(Dislikes >= 3439) %>% #DISLIKES
+  filter(Comments <= 18077) #COMMENTS
+
+mdata_noOutliers %>% 
+    filter(Dislikes >= 3439) %>% View()#DISLIKES #TEENAGE MUTANT NINJA TURTLES
+
+#PDF Output
+#makeCodebook(mdata_noOutliers,replace = TRUE)
+#makeDataReport(mdata_noOutliers,replace = TRUE)
+
+#clean(mdata_noOutliers,replace = TRUE)
+#visualize(mdata_noOutliers,replace = TRUE)
+#check(mdata_noOutliers,replace = TRUE)
+```
+
+```{r, class.source="answer", echo=F}
+library("PerformanceAnalytics")
+
+a<- mdata_noOutliers %>% select_if(is.numeric)
+chart.Correlation(a , histogram=TRUE, pch=19)
+
+#Looks more normal but still long tails
+mdata_noOutliers %>% mutate_if(is.numeric, ~.) %>% visualize(visuals =  setVisuals(all = "basicVisual"))
+```
+
+#EDAreg
+```{r, class.source="answer", echo=F}
+source("./Scripts/edaFunctions.R")
+hist(mdata_encoded$Gross)
+hist(mdata_encoded$Gross_log)
+str(mdata_encoded)
+
+#HISTOGRAMS OF NUMERIC
+histAllNumeric(mdata_encoded)
+smoothHistAllNumeric(mdata_encoded)
+heatmapper(mdata_encoded)
+correlator(mdata_encoded)
+
+boxplotCats(mdata_encoded,"Gross_log")
+boxplotCats(mdata_encoded,"Gross")
+
+violinPlotCats(mdata_encoded,"Gross_log")
+violinPlotCats(mdata_encoded,"Gross")
+
+model1 <- lm(data = mdata_encoded, Gross_log ~.)
+summary(model1)
+
+for(var in mdata_encoded %>%select_if(is.numeric) %>% names){
+  plot_vs_response(mdata_encoded, "Gross",var)
+}
+
+```
+
+#MISSING DATA ANALYSIS
+```{r, class.source="answer", echo=F}
+library(finalfit)
+
+dependent = mdata_encoded %>% select(Gross) %>% names()
+explanatory = mdata_encoded %>% select(-Gross, -Gross_log, -Movie) %>% names()
+
+#everything coded okay
+mdata_encoded %>% 
+    ff_glimpse(dependent, explanatory)
+
+mdata_encoded %>% 
+  missing_plot()
+
+mdata_encoded %>% 
+  missing_pattern(dependent, explanatory)
+
+mdata_encoded %>% 
+  summary_factorlist(dependent, explanatory, na_include=TRUE, p=TRUE)
+
+mdata_encoded %>% 
+  missing_pairs(dependent, explanatory)
+
+mdata_encoded %>% 
+  missing_pairs(dependent, explanatory, position = "fill", )
+
+mdata_encoded %>% 
+    finalfit(dependent, explanatory) 
+
+#MCAR vs MAR
+```
+
+```{r, class.source="answer", echo=F}
+#following this tutorial https://cran.r-project.org/web/packages/finalfit/vignettes/missing.html
+
+library(mice)
+
+#MNAR vs MAR
+
+library(dplyr)
+library(tidyverse)
+
+predM<-mdata_encoded %>%
+  select(dependent, explanatory) %>%
+  finalfit::missing_predictorMatrix(drop_from_imputed =
+    c("obstruct.factor", explanatory))
+
+
+
+#IMPUTE using PMM or CART
+mdata_imputated<-mdata_encoded %>% 
+  select(dependent, explanatory) %>%
+  # Usually run imputation with 10 imputed sets, 4 here for demonstration
+  mice(m = 4, predictorMatrix = predM, method='pmm') %>%
+  # Run logistic regression on each imputed set
+  mice::complete() %>%
+  #add columns back in
+  add_column(Movie = mdata_encoded$Movie) %>%
+  add_column(Gross_log = mdata_encoded$Gross_log) %>% 
+  select(Movie, Gross, Gross_log, Budget, everything()) %>% 
+  as_tibble()
+
+#looks better except for one missing Gross_log. 
+mdata_imputated %>% missing_plot()
+
+mdata_imputated %>% filter(is.na(Gross_log))
+
+mdata_imputated %>% write_csv("./mdata_imputated.csv")
+
+```
