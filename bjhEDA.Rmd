@@ -8,6 +8,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(skimr)
 library(dplyr)
 library(dataMaid)
+library(ggplot2)
 ```
 
 ```{r import}
@@ -127,6 +128,7 @@ for(var in mdata_encoded %>%select_if(is.numeric) %>% names){
 #MISSING DATA ANALYSIS
 ```{r, class.source="answer", echo=F}
 library(finalfit)
+library(mice)
 
 dependent = mdata_encoded %>% select(Gross) %>% names()
 explanatory = mdata_encoded %>% select(-Gross, -Gross_log, -Movie) %>% names()
@@ -142,13 +144,57 @@ mdata_encoded %>%
   missing_pattern(dependent, explanatory)
 
 mdata_encoded %>% 
+  md.pattern() 
+
+missingvalFactor<-mdata_encoded %>% 
+  mutate(MISSING=ifelse(!complete.cases(mdata_encoded), "MISSING", "Not Missing")) 
+
+#CHECK IF THERE ARE DIFFERENCES between missing and not missing
+continuous<-missingvalFactor %>% select_if(is.numeric) %>% names
+plist <- vector("list", length(continuous))
+
+for(var in c("Ratings","Gross","Budget","Screens")){
+    plist[[which(var == continuous)]]<-ggplot(data=missingvalFactor, aes_string(x = "MISSING", y = var, fill = "MISSING")) +
+        geom_boxplot() + 
+        xlab("") + 
+        theme(legend.position = "none")
+}                                          
+cowplot::plot_grid(plotlist = plist, ncol = 3, labels = "")
+
+plist <- vector("list", length(continuous))
+
+for(var in c("Sequel","Sentiment","Views","Likes")){
+    plist[[which(var == continuous)]]<-ggplot(data=missingvalFactor, aes_string(x = "MISSING", y = var, fill = "MISSING")) +
+        geom_boxplot() + 
+        xlab("") + 
+        theme(legend.position = "none")
+}                                          
+cowplot::plot_grid(plotlist = plist, ncol = 3, labels = "")
+
+plist <- vector("list", length(continuous))
+
+for(var in c("Dislikes","Comments","Aggregate.Followers")){
+    plist[[which(var == continuous)]]<-ggplot(data=missingvalFactor, aes_string(x = "MISSING", y = var, fill = "MISSING")) +
+        geom_boxplot() + 
+        xlab("") + 
+        theme(legend.position = "none")
+}                                          
+cowplot::plot_grid(plotlist = plist, ncol = 3, labels = "")
+#####
+
+boxplotCats(missingvalFactor,"Gross")
+
+library(VIM)
+aggr(mdata_encoded, col=c('navyblue','red'), numbers=TRUE, sortVars=TRUE, labels=names(mdata_encoded), cex.axis=.7, gap=3, ylab=c("Histogram of missing data","Pattern"))
+
+mdata_encoded %>% 
   summary_factorlist(dependent, explanatory, na_include=TRUE, p=TRUE)
 
 mdata_encoded %>% 
   missing_pairs(dependent, explanatory)
 
 mdata_encoded %>% 
-  missing_pairs(dependent, explanatory, position = "fill", )
+  missing_pairs(dependent, explanatory, position = "fill", use_labels=T)
 
 mdata_encoded %>% 
     finalfit(dependent, explanatory) 
