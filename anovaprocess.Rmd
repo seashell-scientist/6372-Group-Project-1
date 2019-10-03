@@ -224,6 +224,10 @@ ggboxplot(mdata3, x = "Sequel", y = "Return_Log", color = "Year", add = c("mean_
 ggboxplot(mdata3, x = "Round.Ratings", y = "Return_Log", color = "Year", add = c("mean_se"), palette = c("thistle3", "yellowgreen"))+
   labs(title = "Logged Profit Ratios vs Rating for 2014-2015")
 
+ggboxplot(mdata3, x = "Genre", y = "Return_Log", color = "Round.Ratings", add = c("mean_se"), palette = rainbow(7))+
+  labs(title = "Logged Profit Ratios vs Rating for 2014-2015")+
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 0.5)
+
 ```
 
 ```{r anova thing}
@@ -287,14 +291,6 @@ plot(anov10)
 ```
 
 
-```{r ftest}
-#anova(anov4, type = 3)
-#getting pretty signficant differences between various anova combinations
-#summary(anov4)
-
-#model.tables(anov7, type = "effects")
-```
-
 
 ```{r sum stats}
  group_by(mdata3, Genre, Year) %>% 
@@ -326,23 +322,28 @@ sampleset2 = sample.split(mdata2, SplitRatio = 0.8)
 mtrain2 <- subset(mdata2, sampleset2 == TRUE)
 mtest2 = subset(mdata2, sampleset2 == FALSE)
 
-```
+sampleset3 = sample.split(mdata3, SplitRatio = 0.8)
+mtrain3 <- subset(mdata3, sampleset3 == TRUE)
+mtest3 = subset(mdata3, sampleset3 == FALSE)
 
-```{r fit model based on anova variable selection thing?}
-alm1 <- lm(Return ~ Genre + Ratings*Likes + Genre*Year, data = mtrain)
-summary(alm1)
-par(mfrow = c(2, 2))
-plot(alm1)
+
 ```
 
 ```{r fit model2}
-alm2 <- lm(Return ~ Genre + Genre*Year, data = mtrain2)
+alm1 <- lm(Return ~ Genre + Ratings*Likes + Genre*Year, data = mtrain)
+
+alm2 <- lm(Return ~ Genre + Year, data = mtrain2)
 #m3
 alm3 <- lm(Return ~ Genre + Screens + Sequel + Year + Ratings + Likes + Sequel*Year + Ratings*Likes + Genre*Year, data = mtrain2)
-alm2 <- alm3
+
+alm4 <- lm(Return ~ Ratings + Budget + Views + Genre + Year*Genre + Screens, data = mtrain2)
+
+alm5 <- lm(Return ~ Gross + Budget + Year + Ratings + Genre + Screens + Sequel + Sentiment + Views + Likes + Dislikes + Comments + Aggregate_Followers, data = mtrain2)
 ```
 
 ```{r detplot alm2}
+alm2 <- alm4
+
 summary(alm2)
 par(mfrow = c(2, 2))
 plot(alm2)
@@ -372,30 +373,24 @@ grid.arrange(plot1, plot2,plot3, ncol=3)
 ```
 
 ```{r apply model?}
-pred1 <- predict(alm2, newdata = mtest2)
-rmse <- sqrt(sum((exp(pred1) - mtest$Return)^2)/length(mtest$Return))
-#c(RMSE = rmse, R2 = summary(alm2)$r.squared)
-print(paste("RMSE:", rmse))
-print(paste("R^2:", summary(alm2)$r.squared))
-#ASE part (average squared error)
-ASE1 <- mean((mtest2$Return - pred1)^2)
-print( paste("Average Squared Error for non-additive model:", ASE1) )
 
-par(mfrow = c(1, 1))
-ggplot()+
-  geom_line(data = mtest2, aes(x = Budget, y = Return), color = "blue")+
-  geom_line(aes(x = mtest2$Budget, y = pred1), color = "red")
+#pred1 <- predict(alm2, newdata = mtest2)
+
+#rmse <- sqrt(sum((exp(pred1) - mtest2$Return)^2)/length(mtest2$Return))
+##c(RMSE = rmse, R2 = summary(alm2)$r.squared)
+#print(paste("RMSE:", rmse))
+#print(paste("R^2:", summary(alm2)$r.squared))
+##ASE part (average squared error)
+#ASE1 <- mean((mtest2$Return - pred1)^2)
+#print( paste("Average Squared Error for non-additive model:", ASE1) )
+#
+#par(mfrow = c(1, 1))
+#ggplot()+
+#  geom_line(data = mtest2, aes(x = Budget, y = Return), color = "blue")+
+#  geom_line(aes(x = mtest2$Budget, y = pred1), color = "red")
   
 
 #plot(mtest$Return, pred1)
-```
-
-
-
-```{r compare models}
-#compare ASE scores?
-
-
 ```
 
 
